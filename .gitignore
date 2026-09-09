@@ -1,0 +1,53 @@
+# Build output
+**/bin/
+**/obj/
+.vs/
+
+# Test and coverage output
+TestResults/
+**/TestResults/
+coverage/
+coverage.*
+*.coverage
+*.coveragexml
+*.trx
+*.lcov
+
+# Logs and temporary files
+logs/
+**/logs/
+*.log
+*.tmp
+*.temp
+*.bak
+*.orig
+*.swp
+*.cache
+
+# Local databases
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
+# Local configuration and secrets
+.env
+.env.*
+secrets/
+**/secrets/
+appsettings.Local.json
+appsettings.*.Local.json
+
+# IDE and user-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.idea/
+.vscode/
+
+# Operating system files
+.DS_Store
+Thumbs.db
