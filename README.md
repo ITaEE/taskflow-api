@@ -1,5 +1,7 @@
 # TaskFlow API
 
+[![CI](https://github.com/ITaEE/taskflow-api/actions/workflows/ci.yml/badge.svg)](https://github.com/ITaEE/taskflow-api/actions/workflows/ci.yml)
+
 A production-style ASP.NET Core REST API for authenticated project and task management. This is a portfolio project focused on practical backend engineering: clean project boundaries, secure local authentication, owner-scoped data access, SQLite persistence, documented HTTP APIs, and integration testing.
 
 ## Overview
@@ -137,7 +139,7 @@ Swagger includes a Bearer scheme. The manual workflow is:
 
 ## Tests
 
-The integration suite exercises project/task CRUD, validation, relationships, cascade deletion, status rules, registration, login, JWT protection, safe auth failures, password-hash privacy, Swagger bearer metadata, and two-user ownership isolation.
+The integration suite contains 62 tests covering project/task CRUD, validation, relationships, cascade deletion, migration application, status rules, registration, login, expired/malformed JWT rejection, safe auth failures, password-hash privacy, Swagger bearer metadata, and two-user ownership isolation. Tests run against an isolated in-memory SQLite database and never modify the local development database.
 
 Run all tests with:
 
@@ -155,6 +157,8 @@ Requirements:
 Restore, build, and run:
 
 ```powershell
+git clone https://github.com/ITaEE/taskflow-api.git
+cd taskflow-api
 dotnet restore
 dotnet build
 dotnet run --project Portfolio.TaskFlowApi.Api
@@ -180,6 +184,31 @@ $env:JWT__AUDIENCE = "TaskFlowApi.Swagger"
 $env:JWT__SIGNING_KEY = [Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(48))
 dotnet run --project Portfolio.TaskFlowApi.Api
 ```
+
+## Migrations
+
+The API applies pending migrations at startup. To apply them explicitly, restore the local EF Core tool and run:
+
+```powershell
+dotnet tool restore
+dotnet ef database update --project Portfolio.TaskFlowApi.Infrastructure --startup-project Portfolio.TaskFlowApi.Api
+```
+
+The JWT environment variables above are also required for this command because the API startup project validates JWT configuration before creating a database context.
+
+## CI
+
+GitHub Actions runs restore, a Release build, and the integration suite for every push and pull request. The tests supply their own clearly isolated test JWT configuration; no production secret is required by CI.
+
+## Publish
+
+Create a self-contained Windows publish output with:
+
+```powershell
+dotnet publish Portfolio.TaskFlowApi.Api --configuration Release --runtime win-x64 --self-contained true --output .\artifacts\publish\win-x64
+```
+
+`artifacts/` is ignored by Git. Provide JWT configuration externally when starting the published API.
 
 ## Security Notes
 
@@ -207,7 +236,7 @@ Portfolio.TaskFlowApi.Infrastructure/
   Security/              ASP.NET Core password-hashing adapter
 Portfolio.TaskFlowApi.Tests/
   Integration tests and test web host
-docs/screenshots/        Reserved for real manual screenshots
+docs/screenshots/        Portfolio screenshots
 ```
 
 ## Screenshots
@@ -226,4 +255,4 @@ docs/screenshots/        Reserved for real manual screenshots
 
 ## Future Improvements
 
-The following are intentionally deferred beyond the current portfolio scope: refresh tokens, email confirmation, password reset, OAuth providers, roles/administration, organizations, frontend work, Docker, deployment, cloud services, and notifications.
+The following are intentionally deferred beyond the current portfolio scope: refresh tokens, email confirmation, password reset, OAuth providers, roles/administration, organizations, pagination, frontend work, Docker, PostgreSQL deployment, cloud services, and notifications.

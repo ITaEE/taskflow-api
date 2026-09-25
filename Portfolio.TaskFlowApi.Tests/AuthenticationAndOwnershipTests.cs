@@ -2,9 +2,13 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Security.Claims;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 using Portfolio.TaskFlowApi.Api.Contracts.Auth;
 using Portfolio.TaskFlowApi.Api.Contracts.Projects;
 using Portfolio.TaskFlowApi.Api.Contracts.Tasks;
@@ -189,6 +193,29 @@ public sealed class AuthenticationAndOwnershipTests :
     }
 
     [Fact]
+    public async Task ProtectedEndpointWithExpiredTokenReturnsUnauthorized()
+    {
+        var expiredAtUtc = DateTime.UtcNow.AddMinutes(-2);
+        var expiredToken = new JwtSecurityToken(
+            issuer: "Portfolio.TaskFlowApi.Tests",
+            audience: "Portfolio.TaskFlowApi.Tests.Client",
+            claims: [new Claim(JwtRegisteredClaimNames.Sub, Guid.NewGuid().ToString())],
+            notBefore: expiredAtUtc.AddMinutes(-5),
+            expires: expiredAtUtc,
+            signingCredentials: new SigningCredentials(
+                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(ApiWebApplicationFactory.TestOnlySigningKey)),
+                SecurityAlgorithms.HmacSha256));
+
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            new JwtSecurityTokenHandler().WriteToken(expiredToken));
+
+        var response = await _client.GetAsync("/api/projects");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
     public async Task ValidTokenAllowsProtectedEndpointAccess()
     {
         await RegisterLoginAndAuthorizeAsync(_client, "authorized@example.test");
@@ -196,6 +223,17 @@ public sealed class AuthenticationAndOwnershipTests :
         var response = await _client.GetAsync("/api/projects");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task TestDatabaseHasNoPendingMigrations()
+    {
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<TaskFlowDbContext>();
+
+        var pendingMigrations = await dbContext.Database.GetPendingMigrationsAsync();
+
+        Assert.Empty(pendingMigrations);
     }
 
     [Fact]

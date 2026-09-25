@@ -11,7 +11,7 @@ namespace Portfolio.TaskFlowApi.Tests;
 
 public sealed class ApiWebApplicationFactory : WebApplicationFactory<Program>
 {
-    private const string TestOnlySigningKey = "TEST_ONLY_TaskFlowApi_signing_key_64_bytes_long_2026_not_for_runtime";
+    internal const string TestOnlySigningKey = "TEST_ONLY_TaskFlowApi_signing_key_64_bytes_long_2026_not_for_runtime";
     private readonly SqliteConnection _connection = new("Data Source=:memory:");
 
     public ApiWebApplicationFactory()
